@@ -1,73 +1,56 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
-
-import InputControl from "../InputControl/InputControl";
 import { auth } from "../../firebase";
-
-import styles from "./Login.module.css";
 
 function Login() {
   const navigate = useNavigate();
   const [values, setValues] = useState({
     email: "",
-    pass: "",
+    password: "",
   });
   const [errorMsg, setErrorMsg] = useState("");
-  const [submitButtonDisabled, setSubmitButtonDisabled] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmission = () => {
-    if (!values.email || !values.pass) {
-      setErrorMsg("Fill all fields");
-      return;
-    }
+  const handleSubmission = async (e) => {
+    e.preventDefault();
     setErrorMsg("");
+    setLoading(true);
 
-    setSubmitButtonDisabled(true);
-    signInWithEmailAndPassword(auth, values.email, values.pass)
-      .then(async (res) => {
-        setSubmitButtonDisabled(false);
-        
-        navigate("/");
-      })
-      .catch((err) => {
-        setSubmitButtonDisabled(false);
-        setErrorMsg(err.message);
-      });
+    try {
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      navigate("/");
+    } catch (error) {
+      setErrorMsg(error.message);
+    }
+
+    setLoading(false);
   };
+
   return (
-    <div className={styles.container}>
-      <div className={styles.innerBox}>
-        <h1 className={styles.heading}>Login</h1>
-
-        <InputControl
-          label="Email"
-          onChange={(event) =>
-            setValues((prev) => ({ ...prev, email: event.target.value }))
-          }
-          placeholder="Enter email address"
+    <div>
+      <h1>Login</h1>
+      <form onSubmit={handleSubmission}>
+        <input
+          type="email"
+          placeholder="Email"
+          value={values.email}
+          onChange={(e) => setValues({ ...values, email: e.target.value })}
         />
-        <InputControl
-          label="Password"
-          onChange={(event) =>
-            setValues((prev) => ({ ...prev, pass: event.target.value }))
-          }
-          placeholder="Enter Password"
+        <input
+          type="password"
+          placeholder="Password"
+          value={values.password}
+          onChange={(e) => setValues({ ...values, password: e.target.value })}
         />
-
-        <div className={styles.footer}>
-          <b className={styles.error}>{errorMsg}</b>
-          <button disabled={submitButtonDisabled} onClick={handleSubmission}>
-            Login
-          </button>
-          <p>
-            Already have an account?{" "}
-            <span>
-              <Link to="/signup">Sign up</Link>
-            </span>
-          </p>
-        </div>
-      </div>
+        <button type="submit" disabled={loading}>
+          Login
+        </button>
+        <p>
+          Don't have an account? <Link to="/signup">Sign up</Link>
+        </p>
+        {errorMsg && <p>{errorMsg}</p>}
+      </form>
     </div>
   );
 }

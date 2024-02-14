@@ -1,32 +1,34 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { auth } from "./firebase";
 
 import Home from "./components/Home/Home";
 import Login from "./components/Login/Login";
 import Signup from "./components/Signup/Signup";
-
-import { auth } from "./firebase";
+import ImageUpload from "./components/ImageUpload/ImageUpload";
 
 import "./App.css";
 
 function App() {
-  const [userName, setUserName] = useState("");
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    auth.onAuthStateChanged((user) => {
-      if (user) {
-        setUserName(user.displayName);
-      } else setUserName("");
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setCurrentUser(user);
     });
+    return unsubscribe;
   }, []);
 
   return (
     <div className="App">
       <Router>
         <Routes>
+          <Route path="/" element={<Home currentUser={currentUser} />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/" element={<Home name={userName} />} />
+          {currentUser && (
+            <Route path="/upload" element={<ImageUpload currentUser={currentUser} />} />
+          )}
         </Routes>
       </Router>
     </div>
